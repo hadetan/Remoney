@@ -1,0 +1,19 @@
+@import "tailwindcss";
+
+/*
+ * Remoney is an intentionally light, wallet-style app. We pin a light surface
+ * regardless of the OS color scheme so the green/red Cr/Dr treatments and the
+ * card surfaces always read as designed (no dark-mode flip). Colors are applied
+ * via Tailwind utility classes (zinc / emerald / red), not CSS variables.
+ */
+@theme inline {
+  --font-sans: var(--font-geist-sans);
+}
+
+html {
+  color-scheme: light;
+}
+
+body {
+  font-family: var(--font-sans), system-ui, sans-serif;
+}
