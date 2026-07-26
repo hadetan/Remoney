@@ -2,11 +2,13 @@
 import type { AppData, Shop } from "@/lib/types";
 import {
   balance,
+  buildTransactionList,
   settleBreakdown,
   groupByDate,
   settlementRowInfo,
   type SettleBreakdown,
   type DateGroup,
+  type TransactionListGroup,
   type SettlementRowInfo,
 } from "@/lib/ledger";
 import type { Transaction } from "@/lib/types";
@@ -22,3 +24,6 @@ export const selectGroupedTransactions = (shop: Shop): DateGroup[] => groupByDat
 
 export const selectSettlementRowInfo = (shop: Shop, tx: Transaction): SettlementRowInfo =>
   settlementRowInfo(shop, tx);
+
+export const selectTransactionList = (shop: Shop): TransactionListGroup[] =>
+  buildTransactionList(shop);

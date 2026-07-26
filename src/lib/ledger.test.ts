@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import {
   balance,
+  buildTransactionList,
   lastSettlement,
   settleBreakdown,
   settlementRowInfo,
@@ -145,5 +146,32 @@ describe("groupByDate", () => {
     const groups = groupByDate(shop);
     expect(groups.map((g) => g.date)).toEqual(["2026-04-20", "2026-04-15"]);
     expect(groups[1].transactions.map((t) => t.amount)).toEqual([100, 200]);
+  });
+});
+
+describe("buildTransactionList", () => {
+  it("builds grouped rows and computes settlement info in one ordered pass", () => {
+    const shop = makeShop([
+      ["DEBIT", 300000, "2026-04-15"],
+      ["SETTLEMENT", 100000, "2026-04-20"],
+      ["SETTLEMENT", 250000, "2026-04-20"],
+    ]);
+
+    const groups = buildTransactionList(shop);
+
+    expect(groups.map((group) => group.date)).toEqual(["2026-04-20", "2026-04-15"]);
+    expect(groups[0].rows).toHaveLength(2);
+
+    expect(groups[0].rows[0].settlementInfo).toEqual({
+      paid: 100000,
+      resultingCredit: null,
+      remainingOwed: 200000,
+    });
+    expect(groups[0].rows[1].settlementInfo).toEqual({
+      paid: 250000,
+      resultingCredit: 50000,
+      remainingOwed: null,
+    });
+    expect(groups[1].rows[0].settlementInfo).toBeNull();
   });
 });

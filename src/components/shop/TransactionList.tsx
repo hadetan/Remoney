@@ -1,8 +1,9 @@
 "use client";
 
+import { useMemo } from "react";
 import { Receipt } from "lucide-react";
 import { DateGroup } from "./DateGroup";
-import { selectGroupedTransactions } from "@/store/selectors";
+import { selectTransactionList } from "@/store/selectors";
 import type { Shop, Transaction } from "@/lib/types";
 
 interface Props {
@@ -12,7 +13,7 @@ interface Props {
 
 /** Renders the date-grouped log (newest date first); empty-shop placeholder. */
 export function TransactionList({ shop, onEdit }: Props) {
-  const groups = selectGroupedTransactions(shop);
+  const groups = useMemo(() => selectTransactionList(shop), [shop]);
 
   if (groups.length === 0) {
     return (
@@ -29,7 +30,7 @@ export function TransactionList({ shop, onEdit }: Props) {
   return (
     <div className="flex flex-col pb-28">
       {groups.map((group) => (
-        <DateGroup key={group.date} shop={shop} group={group} onEdit={onEdit} />
+        <DateGroup key={group.date} group={group} onEdit={onEdit} />
       ))}
     </div>
   );

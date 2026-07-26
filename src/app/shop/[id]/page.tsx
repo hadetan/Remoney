@@ -7,6 +7,7 @@ import { TransactionList } from "@/components/shop/TransactionList";
 import { AddEntryButton } from "@/components/shop/AddEntryButton";
 import { EntrySheet } from "@/components/sheets/EntrySheet";
 import { SettleSheet } from "@/components/sheets/SettleSheet";
+import { ShopLoadingScene } from "@/components/ui/LoadingScene";
 import { useBottomSheet } from "@/hooks/useBottomSheet";
 import { useAppData } from "@/store/useAppData";
 import { selectShop, selectBalance } from "@/store/selectors";
@@ -23,7 +24,7 @@ export default function ShopPage() {
 
   // Wait for hydration before deciding the shop exists.
   if (!mounted) {
-    return <main className="min-h-screen" aria-hidden />;
+    return <ShopLoadingScene />;
   }
 
   const shop = selectShop(data, params.id);

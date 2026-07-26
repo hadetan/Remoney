@@ -1,13 +1,12 @@
 "use client";
 
 import { Money } from "@/components/ui/Money";
-import { selectSettlementRowInfo } from "@/store/selectors";
 import { formatMoney } from "@/lib/money";
-import type { Shop, Transaction } from "@/lib/types";
+import type { TransactionListRow } from "@/lib/ledger";
+import type { Transaction } from "@/lib/types";
 
 interface Props {
-  shop: Shop;
-  tx: Transaction;
+  row: TransactionListRow;
   onEdit: (tx: Transaction) => void;
 }
 
@@ -15,7 +14,8 @@ interface Props {
  * One ledger row. DEBIT shows the amount only. SETTLEMENT shows the paid amount
  * plus resulting credit (overpayment) or remaining owed (partial). Tap to edit.
  */
-export function TransactionRow({ shop, tx, onEdit }: Props) {
+export function TransactionRow({ row, onEdit }: Props) {
+  const { tx } = row;
   const isSettlement = tx.type === "SETTLEMENT";
 
   return (
@@ -23,7 +23,7 @@ export function TransactionRow({ shop, tx, onEdit }: Props) {
       onClick={() => onEdit(tx)}
       className="flex w-full items-center justify-between rounded-2xl px-3 py-3 text-left transition-colors hover:bg-zinc-50"
     >
-      {isSettlement ? <SettlementContent shop={shop} tx={tx} /> : <DebitContent tx={tx} />}
+      {isSettlement ? <SettlementContent row={row} /> : <DebitContent tx={tx} />}
     </button>
   );
 }
@@ -37,8 +37,9 @@ function DebitContent({ tx }: { tx: Transaction }) {
   );
 }
 
-function SettlementContent({ shop, tx }: { shop: Shop; tx: Transaction }) {
-  const info = selectSettlementRowInfo(shop, tx);
+function SettlementContent({ row }: { row: TransactionListRow }) {
+  const info = row.settlementInfo;
+  if (info === null) return null;
   return (
     <>
       <span className="text-sm font-medium text-emerald-600">Payment</span>

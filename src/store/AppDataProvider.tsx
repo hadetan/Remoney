@@ -1,9 +1,16 @@
 "use client";
 
-import { createContext, useEffect, useReducer, type Dispatch, type ReactNode } from "react";
+import {
+  createContext,
+  useEffect,
+  useReducer,
+  useRef,
+  type Dispatch,
+  type ReactNode,
+} from "react";
 import type { AppData, Shop, Transaction } from "@/lib/types";
 import { EMPTY_APP_DATA, SCHEMA_VERSION } from "@/lib/constants";
-import { loadAppData, saveAppData } from "@/lib/storage";
+import { loadAppDataAsync, saveAppData } from "@/lib/storage";
 import { mergeImport, type ExportDocument } from "@/lib/importExport";
 
 export interface AppDataState {
@@ -86,16 +93,34 @@ export const AppDataContext = createContext<{
 
 export function AppDataProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(reducer, { data: EMPTY_APP_DATA, mounted: false });
+  const hydratedOnceRef = useRef(false);
+  const persistHydratedSnapshotRef = useRef(false);
 
   // Hydrate from localStorage on the client, after first paint.
   useEffect(() => {
-    dispatch({ kind: "HYDRATE", data: loadAppData() });
+    let cancelled = false;
+
+    void (async () => {
+      const loaded = await loadAppDataAsync();
+      if (cancelled) return;
+      persistHydratedSnapshotRef.current = loaded.needsSave;
+      dispatch({ kind: "HYDRATE", data: loaded.data });
+    })();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   // Persist after hydration. The guard prevents the pre-hydration empty state
   // from clobbering existing stored data.
   useEffect(() => {
     if (!state.mounted) return;
+    if (!hydratedOnceRef.current) {
+      hydratedOnceRef.current = true;
+      if (!persistHydratedSnapshotRef.current) return;
+      persistHydratedSnapshotRef.current = false;
+    }
     saveAppData(state.data);
   }, [state.data, state.mounted]);
 

@@ -111,6 +111,18 @@ export interface DateGroup {
   transactions: Transaction[];
 }
 
+export interface TransactionListRow {
+  tx: Transaction;
+  settlementInfo: SettlementRowInfo | null;
+}
+
+export interface TransactionListGroup {
+  /** "YYYY-MM-DD" key. */
+  date: string;
+  /** Rows for this date, ordered by createdAt ascending. */
+  rows: TransactionListRow[];
+}
+
 /**
  * Group a shop's transactions by calendar date.
  * - Groups returned in DESCENDING date order (newest date first).
@@ -135,4 +147,36 @@ export function groupByDate(shop: Shop): DateGroup[] {
   // Newest date first.
   groups.sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
   return groups;
+}
+
+/**
+ * Build the entire shop log for display in one ordered pass. This avoids
+ * recalculating settlement row info for every rendered row.
+ */
+export function buildTransactionList(shop: Shop): TransactionListGroup[] {
+  const ordered = orderedTransactions(shop);
+  const groupsByDate = new Map<string, TransactionListRow[]>();
+  let runningBalance = 0;
+
+  for (const tx of ordered) {
+    runningBalance += tx.type === "SETTLEMENT" ? tx.amount : -tx.amount;
+
+    const settlementInfo =
+      tx.type === "SETTLEMENT"
+        ? {
+            paid: tx.amount,
+            resultingCredit: runningBalance > 0 ? runningBalance : null,
+            remainingOwed: runningBalance > 0 ? null : Math.abs(runningBalance),
+          }
+        : null;
+
+    const row: TransactionListRow = { tx, settlementInfo };
+    const bucket = groupsByDate.get(tx.date);
+    if (bucket) bucket.push(row);
+    else groupsByDate.set(tx.date, [row]);
+  }
+
+  return [...groupsByDate.entries()]
+    .sort(([a], [b]) => (a < b ? 1 : a > b ? -1 : 0))
+    .map(([date, rows]) => ({ date, rows }));
 }
