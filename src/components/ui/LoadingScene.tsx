@@ -4,6 +4,28 @@ function SkeletonBlock({ className = "" }: { className?: string }) {
   return <div className={`animate-pulse rounded-2xl bg-zinc-200/80 ${className}`} aria-hidden />;
 }
 
+export function ShopTransactionListLoading({
+  message = "Preparing your entries...",
+}: {
+  message?: string;
+}) {
+  return (
+    <div className="flex flex-col gap-4 px-6 py-6">
+      <div className="text-sm font-medium text-zinc-500">{message}</div>
+      <div className="flex flex-col gap-4">
+        <SkeletonBlock className="h-4 w-24 rounded-lg" />
+        <SkeletonBlock className="h-16 w-full" />
+        <SkeletonBlock className="h-16 w-full" />
+      </div>
+      <div className="flex flex-col gap-4">
+        <SkeletonBlock className="h-4 w-28 rounded-lg" />
+        <SkeletonBlock className="h-16 w-full" />
+        <SkeletonBlock className="h-16 w-full" />
+      </div>
+    </div>
+  );
+}
+
 export function DashboardLoadingScene() {
   return (
     <main className="min-h-screen pb-28">
@@ -33,16 +55,7 @@ export function ShopLoadingScene() {
         <SkeletonBlock className="h-10 w-10 rounded-full" />
       </header>
 
-      <div className="flex flex-col gap-4 px-6 py-6">
-        <SkeletonBlock className="h-4 w-24 rounded-lg" />
-        <SkeletonBlock className="h-16 w-full" />
-        <SkeletonBlock className="h-16 w-full" />
-        <SkeletonBlock className="h-4 w-28 rounded-lg" />
-        <SkeletonBlock className="h-16 w-full" />
-        <SkeletonBlock className="h-16 w-full" />
-      </div>
-
-      <div className="px-6 text-sm text-zinc-500">Loading this shop...</div>
+      <ShopTransactionListLoading message="Loading this shop..." />
     </main>
   );
 }

@@ -12,6 +12,7 @@ import type { AppData, Shop, Transaction } from "@/lib/types";
 import { EMPTY_APP_DATA, SCHEMA_VERSION } from "@/lib/constants";
 import { loadAppDataAsync, saveAppData } from "@/lib/storage";
 import { mergeImport, type ExportDocument } from "@/lib/importExport";
+import { primeShopDerivedData } from "./selectors";
 
 export interface AppDataState {
   /** The live document. */
@@ -123,6 +124,37 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     }
     saveAppData(state.data);
   }, [state.data, state.mounted]);
+
+  // Warm shop-level derived data in the background so opening a shop feels
+  // instant after the dashboard has settled.
+  useEffect(() => {
+    if (!state.mounted || state.data.shops.length === 0) return;
+
+    let cancelled = false;
+    let timer: number | null = null;
+    let raf: number | null = null;
+    let index = 0;
+
+    const scheduleNext = () => {
+      if (cancelled || index >= state.data.shops.length) return;
+      raf = window.requestAnimationFrame(() => {
+        timer = window.setTimeout(() => {
+          if (cancelled || index >= state.data.shops.length) return;
+          primeShopDerivedData(state.data.shops[index]);
+          index += 1;
+          scheduleNext();
+        }, 0);
+      });
+    };
+
+    scheduleNext();
+
+    return () => {
+      cancelled = true;
+      if (raf !== null) window.cancelAnimationFrame(raf);
+      if (timer !== null) window.clearTimeout(timer);
+    };
+  }, [state.data.shops, state.mounted]);
 
   return <AppDataContext.Provider value={{ state, dispatch }}>{children}</AppDataContext.Provider>;
 }
